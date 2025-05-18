@@ -1,6 +1,6 @@
 package enterprises.iwakura.irminsul.repository;
 
-import enterprises.iwakura.irminsul.DatabaseService;
+import enterprises.iwakura.irminsul.IrminsulDatabaseService;
 import enterprises.iwakura.irminsul.util.TriFunction;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -18,10 +18,15 @@ import java.util.Optional;
  */
 public interface RepositoryExtension<TEntity> {
 
-    DatabaseService getDatabaseService();
+    /**
+     * Gets the database service used for database operations. This method should be already implemented in the {@link BaseRepository}
+     *
+     * @return the database service
+     */
+    IrminsulDatabaseService getDatabaseService();
 
     /**
-     * Gets the entity class type.
+     * Gets the entity class type. This method should be already implemented in the {@link BaseRepository}
      *
      * @return the entity class type
      */

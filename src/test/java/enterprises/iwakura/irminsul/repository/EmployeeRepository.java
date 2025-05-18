@@ -1,6 +1,6 @@
 package enterprises.iwakura.irminsul.repository;
 
-import enterprises.iwakura.irminsul.DatabaseService;
+import enterprises.iwakura.irminsul.IrminsulDatabaseService;
 import enterprises.iwakura.irminsul.entity.Employee;
 
 public class EmployeeRepository extends BaseRepository<Employee, Long> {
@@ -10,7 +10,7 @@ public class EmployeeRepository extends BaseRepository<Employee, Long> {
      *
      * @param databaseService the database service to use
      */
-    public EmployeeRepository(DatabaseService databaseService) {
+    public EmployeeRepository(IrminsulDatabaseService databaseService) {
         super(databaseService);
     }
 

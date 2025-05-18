@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Context for thread local within {@link enterprises.iwakura.irminsul.DatabaseService}
+ * Context for thread local within {@link IrminsulDatabaseService}
  */
 @Data
 public final class IrminsulContext {

@@ -19,13 +19,29 @@ import org.hibernate.cfg.JdbcSettings;
 import java.util.Properties;
 import java.util.function.Function;
 
+/**
+ * Irminsul's Database service class for managing database connections and transactions. You may extend this class
+ * for custom configurations.
+ */
 @Slf4j
-public class DatabaseService {
+public class IrminsulDatabaseService {
 
+    /**
+     * The database configuration used for this service.
+     */
     protected final DatabaseServiceConfiguration databaseConfiguration;
+
+    /**
+     * The Hibernate session factory used for database operations.
+     */
     protected SessionFactory sessionFactory;
 
-    public DatabaseService(DatabaseServiceConfiguration configuration) {
+    /**
+     * Creates a new DatabaseService instance with the given configuration.
+     *
+     * @param configuration the database configuration
+     */
+    public IrminsulDatabaseService(DatabaseServiceConfiguration configuration) {
         this.databaseConfiguration = configuration;
     }
 
@@ -212,6 +228,7 @@ public class DatabaseService {
     protected SessionFactory buildSessionFactory(Configuration configuration, StandardServiceRegistryBuilder serviceRegistry) {
         return configuration.buildSessionFactory(serviceRegistry.build());
     }
+
     /**
      * Logs a message if SQL debugging is enabled.
      *

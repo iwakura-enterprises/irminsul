@@ -1,6 +1,6 @@
 package enterprises.iwakura.irminsul.repository;
 
-import enterprises.iwakura.irminsul.DatabaseService;
+import enterprises.iwakura.irminsul.IrminsulDatabaseService;
 import enterprises.iwakura.irminsul.util.TriFunction;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -10,7 +10,6 @@ import jakarta.persistence.criteria.Root;
 import lombok.Getter;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Base repository class for handling database operations within one entity.
@@ -21,14 +20,17 @@ import java.util.Optional;
 @Getter
 public abstract class BaseRepository<TEntity, TId> {
 
-    protected final DatabaseService databaseService;
+    /**
+     * The database service used for database operations.
+     */
+    protected final IrminsulDatabaseService databaseService;
 
     /**
      * Initializes the repository with the database service.
      *
      * @param databaseService the database service to use
      */
-    public BaseRepository(DatabaseService databaseService) {
+    public BaseRepository(IrminsulDatabaseService databaseService) {
         this.databaseService = databaseService;
     }
 

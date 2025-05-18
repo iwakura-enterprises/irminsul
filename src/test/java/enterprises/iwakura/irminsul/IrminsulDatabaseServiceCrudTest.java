@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DatabaseServiceCrudTest extends DatabaseTest {
+public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
 
     @Test
     public void createUpdateRollbackAndDeleteTest() {
-        final var databaseService = new DatabaseService(applyTestcontainersConfig(new DatabaseServiceConfiguration()));
+        final var databaseService = new IrminsulDatabaseService(applyTestcontainersConfig(new DatabaseServiceConfiguration()));
         databaseService.initialize(
                 Company.class,
                 Employee.class

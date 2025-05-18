@@ -6,11 +6,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class DatabaseServiceCreateTest extends DatabaseTest {
+public class IrminsulDatabaseServiceCreateTest extends DatabaseTest {
 
     @Test
     public void createDatabaseService() {
-        final var databaseService = new DatabaseService(applyTestcontainersConfig(new DatabaseServiceConfiguration()));
+        final var databaseService = new IrminsulDatabaseService(applyTestcontainersConfig(new DatabaseServiceConfiguration()));
         databaseService.initialize(
                 Company.class,
                 Employee.class
@@ -23,7 +23,7 @@ public class DatabaseServiceCreateTest extends DatabaseTest {
         final var config = applyTestcontainersConfig(new DatabaseServiceConfiguration());
         // We are using PostgreSQL, so this should fail
         config.setDialect("org.hibernate.dialect.MariaDBDialect");
-        final var databaseService = new DatabaseService(config);
+        final var databaseService = new IrminsulDatabaseService(config);
 
         assertThrows(RuntimeException.class, () -> databaseService.initialize(
                 Company.class,
@@ -35,7 +35,7 @@ public class DatabaseServiceCreateTest extends DatabaseTest {
 
     @Test
     public void invalidEntityClassFail() {
-        final var databaseService = new DatabaseService(applyTestcontainersConfig(new DatabaseServiceConfiguration()));
+        final var databaseService = new IrminsulDatabaseService(applyTestcontainersConfig(new DatabaseServiceConfiguration()));
         assertThrows(RuntimeException.class, () -> databaseService.initialize(
                 Company.class,
                 Employee.class,
