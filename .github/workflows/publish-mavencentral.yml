@@ -36,8 +36,8 @@ jobs:
           distribution: 'temurin'
       - name: Publish, Close, and Release to MavenCentral
         env:
-          sonatypeUsername: ${{ secrets.SONATYPEUSERNAME }}
-          sonatypePassword: ${{ secrets.SONATYPEPASSWORD }}
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPEUSERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPEPASSWORD }}
           GPG_KEY_ID: ${{ secrets.PGP_KEY_ID }}
           GPG_PRIVATE_KEY: ${{ secrets.PGP_SECRET }}
           GPG_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
