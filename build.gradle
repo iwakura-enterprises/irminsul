@@ -1,0 +1,139 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'signing'
+    id 'maven-publish'
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id 'jacoco'
+    id 'jacoco-report-aggregation'
+
+    id "tech.medivh.plugin.publisher" version "1.2.3"
+}
+
+group = 'enterprises.iwakura'
+version = '0.0.1'
+
+repositories {
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+dependencies {
+    // Hibernate
+    implementation platform("org.hibernate.orm:hibernate-platform:7.0.0.CR1")
+    implementation "org.hibernate.orm:hibernate-core"
+    implementation 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
+    annotationProcessor 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
+    implementation "org.hibernate.orm:hibernate-hikaricp"
+    implementation "jakarta.transaction:jakarta.transaction-api"
+
+    // Liquibase
+    implementation 'org.liquibase:liquibase-core:4.31.1'
+    implementation 'com.mattbertolini:liquibase-slf4j:5.1.0'
+
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api/2.0.17
+    compileOnly 'org.slf4j:slf4j-api:2.0.17'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor 'org.projectlombok:lombok:1.18.38'
+    testCompileOnly 'org.projectlombok:lombok:1.18.38'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation "org.testcontainers:junit-jupiter:1.21.0"
+    testImplementation 'org.testcontainers:postgresql:1.21.0'
+    testImplementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
+    testImplementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+    testImplementation 'org.postgresql:postgresql:42.7.5'
+}
+
+// == Quick tasks == //
+
+task publishCloseAndRelease() {
+    dependsOn 'cleanBuildMedivhMavenRepo'
+    dependsOn 'uploadToSonatype'
+    dependsOn 'publishDeployment'
+}
+
+shadowJar {
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    reports {
+        csv.required.set(true)
+    }
+}
+
+// UTF-8
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+// == Maven publishing == //
+
+publishing {
+
+    publications {
+        shadow(MavenPublication) {
+            groupId = 'enterprises.iwakura'
+            artifactId = 'irminsul'
+            version = getVersion()
+            from components.java
+
+            pom {
+                name = 'Irminsul'
+                description = 'Opinionated Hibernate ORM wrapper with useful tools'
+                url = 'https://github.com/iwakura-enterprises/irminsul'
+
+                scm {
+                    connection = 'scm:https://github.com/iwakura-enterprises/irminsul'
+                    developerConnection = 'scm:git:https://github.com/iwakura-enterprises/irminsul.git'
+                    url = 'https://github.com/iwakura-enterprises/irminsul'
+                }
+
+                licenses {
+                    license {
+                        name = 'The MIT License'
+                        url = 'https://opensource.org/license/mit'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'mayuna'
+                        name = 'Marek Lof'
+                        email = 'uwulilmayu@gmail.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+signing {
+    useInMemoryPgpKeys(
+            System.getenv("GPG_KEY_ID"),
+            System.getenv("GPG_PRIVATE_KEY"),
+            System.getenv("GPG_PASSWORD")
+    )
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+shadowJar.dependsOn javadocJar
+shadowJar.dependsOn sourcesJar
+shadowJar.dependsOn jar
+
+components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
+    skip()
+}
