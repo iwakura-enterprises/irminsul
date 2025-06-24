@@ -14,12 +14,12 @@ that it provides.
 
 - JPA-like repositories with predefined methods
   - Plus some extra methods using the `RepositoryExtension` interface
-- ThreadLocal transaction management
+- `ThreadLocal` transaction management
 - For better or worse, programmatical Hibernate ORM configuration
 
 ## Documentation
 
-For documentation on installation and usage, please check [my documentations](https://docs.iwakura.enterprises/irminsul.html).
+For documentation on installation and usage, please check [my documentations](https://docs.iwakura.enterprises/Irminsul.html).
 
 ## Showcase
 
@@ -61,5 +61,4 @@ final var employee = databaseService.runInThreadTransaction(session -> {
 
 > [!TIP]
 > If you run another transaction within a thread that has active transaction, the same transaction will be used.
-> In practice this means you don't create new session and transaction for every database operations, as that
-> would not make sense.
+> In practice this means you don't create new session and transaction for every database operations.
