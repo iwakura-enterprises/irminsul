@@ -80,41 +80,30 @@ tasks.withType(JavaCompile) {
 
 // == Maven publishing == //
 
-publishing {
-
-    publications {
-        shadow(MavenPublication) {
-            groupId = 'enterprises.iwakura'
-            artifactId = 'irminsul'
-            version = getVersion()
-            from components.java
-
-            pom {
-                name = 'Irminsul'
-                description = 'Opinionated Hibernate ORM wrapper with useful tools'
-                url = 'https://github.com/iwakura-enterprises/irminsul'
-
-                scm {
-                    connection = 'scm:https://github.com/iwakura-enterprises/irminsul'
-                    developerConnection = 'scm:git:https://github.com/iwakura-enterprises/irminsul.git'
-                    url = 'https://github.com/iwakura-enterprises/irminsul'
-                }
-
-                licenses {
-                    license {
-                        name = 'The MIT License'
-                        url = 'https://opensource.org/license/mit'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id = 'mayuna'
-                        name = 'Marek Lof'
-                        email = 'uwulilmayu@gmail.com'
-                    }
-                }
+medivhPublisher {
+    groupId = project.group.toString()
+    artifactId = project.name
+    version = project.version.toString()
+    pom {
+        name = 'Irminsul'
+        description = 'Opinionated Hibernate ORM wrapper with useful tools'
+        url = 'https://github.com/iwakura-enterprises/irminsul'
+        licenses {
+            license {
+                name = "The MIT License"
+                url = "https://opensource.org/license/mit"
             }
+        }
+        developers {
+            developer {
+                id = "mayuna"
+                name = "Marek Lof"
+                email = "uwulilmayu@gmail.com"
+            }
+        }
+        scm {
+            connection = "scm:git:"
+            url = "https://github.com/iwakura-enterprises/irminsul.git"
         }
     }
 }
