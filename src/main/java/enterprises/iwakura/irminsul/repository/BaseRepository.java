@@ -78,7 +78,7 @@ public abstract class BaseRepository<TEntity, TId> {
      *
      * @return the list of found entities
      */
-    protected List<TEntity> findByCriteria(TriFunction<Root<TEntity>, CriteriaQuery<TEntity>, CriteriaBuilder, Predicate> criteriaBuilderConsumer) {
+    public List<TEntity> findByCriteria(TriFunction<Root<TEntity>, CriteriaQuery<TEntity>, CriteriaBuilder, Predicate> criteriaBuilderConsumer) {
         return databaseService.runInThreadTransaction(session -> {
             var cb = session.getCriteriaBuilder();
             var query = cb.createQuery(getEntityClass());
@@ -105,6 +105,21 @@ public abstract class BaseRepository<TEntity, TId> {
         } else {
             return insert(entity);
         }
+    }
+
+    /**
+     * Saves a list of entities to the database. Each entity will be either inserted or updated based on its ID.
+     *
+     * @param entities the list of entities to save
+     *
+     * @return the list of saved entities
+     */
+    public List<TEntity> saveAll(List<TEntity> entities) {
+        if (entities.isEmpty()) {
+            return entities;
+        }
+
+        return databaseService.runInThreadTransaction(session -> entities.stream().map(this::save).toList());
     }
 
     /**

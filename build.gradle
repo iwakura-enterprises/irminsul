@@ -25,7 +25,6 @@ dependencies {
     implementation 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
     annotationProcessor 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
     implementation "org.hibernate.orm:hibernate-hikaricp"
-    implementation "jakarta.transaction:jakarta.transaction-api"
 
     // Liquibase
     implementation 'org.liquibase:liquibase-core:4.31.1'
