@@ -10,6 +10,7 @@ import jakarta.persistence.criteria.Root;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Base repository class for handling database operations within one entity.
@@ -51,14 +52,23 @@ public abstract class BaseRepository<TEntity, TId> {
     protected abstract boolean hasId(TEntity entity);
 
     /**
+     * Finds all entities in the database. Calls {@link #findByCriteria(TriFunction)} with a conjunction predicate, which matches all entities.
+     *
+     * @return the list of found entities
+     */
+    public List<TEntity> findAll() {
+        return findByCriteria((root, query, cb) -> cb.conjunction());
+    }
+
+    /**
      * Finds an entity by its ID.
      *
      * @param id the ID of the entity to find
      *
      * @return the found entity, or null if not found
      */
-    public TEntity findById(TId id) {
-        return databaseService.runInThreadTransaction(session -> session.find(getEntityClass(), id, LockModeType.NONE));
+    public Optional<TEntity> findById(TId id) {
+        return Optional.ofNullable(databaseService.runInThreadTransaction(session -> session.find(getEntityClass(), id, LockModeType.NONE)));
     }
 
     /**

@@ -16,7 +16,7 @@ public final class IrminsulContext {
 
     private static final ThreadLocal<IrminsulContext> THREAD_LOCAL = new ThreadLocal<>();
 
-    private final Long ID = System.currentTimeMillis();
+    private final Long ID = System.nanoTime();
     private final List<Runnable> afterCommitActions = new ArrayList<>();
     private final List<Runnable> rollbackActions = new ArrayList<>();
     private Session session;

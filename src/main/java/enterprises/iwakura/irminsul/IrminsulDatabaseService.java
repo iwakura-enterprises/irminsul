@@ -1,5 +1,6 @@
 package enterprises.iwakura.irminsul;
 
+import enterprises.iwakura.irminsul.exception.TransactionException;
 import jakarta.persistence.Entity;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
@@ -9,6 +10,7 @@ import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -17,6 +19,7 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.cfg.JdbcSettings;
 
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -122,33 +125,116 @@ public class IrminsulDatabaseService {
         // Run the transaction in current Irminsul context
         if (IrminsulContext.hasCurrent()) {
             final var ctx = IrminsulContext.getCurrent();
-            logIfEnabled("Running transaction in current Irminsul context (ID %d)".formatted(ctx.getID()));
-            return transaction.apply(ctx.getSession());
+            logIfEnabled("[%d] Running transaction in current Irminsul context".formatted(ctx.getID()));
+            return transaction.apply(ctx.getSession()); // Exceptions here will be caught and handled in the transaction logic
         }
 
         // Create new session and transaction
         try (Session session = sessionFactory.openSession()) {
             final var ctx = IrminsulContext.initializeCurrent(session);
-            logIfEnabled("Initialized new Irminsul context (ID %d); Begin transaction".formatted(ctx.getID()));
-            ctx.beginTransaction();
-            R result;
+            logIfEnabled("[%d] Initialized new Irminsul context; Begin transaction".formatted(ctx.getID()));
             try {
-                result = transaction.apply(session);
-                logIfEnabled("Committing transaction in Irminsul context (ID %d)".formatted(ctx.getID()));
+                beforeBeginTransaction(ctx);
+                ctx.beginTransaction();
+                afterBeginTransaction(ctx);
+                R result = transaction.apply(session);
+                logIfEnabled("[%d] Committing transaction in Irminsul context".formatted(ctx.getID()));
+                beforeCommitTransaction(ctx);
                 ctx.commit();
-                logIfEnabled("Running after commit actions in Irminsul context (ID %d)".formatted(ctx.getID()));
+                logIfEnabled("[%d] Running after commit actions in Irminsul context".formatted(ctx.getID()));
+                afterCommitTransaction(ctx);
                 ctx.runAfterCommitActions();
+                return result;
             } catch (Throwable throwable) {
-                log.error("Rolling back transaction in Irminsul context (ID {}) due to exception", ctx.getID(), throwable);
+                logIfEnabled("[%d] Exception occurred while running transaction, rolling back".formatted(ctx.getID()), throwable);
+                beforeRollbackTransaction(ctx);
                 ctx.rollback();
-                logIfEnabled("Running after rollback actions in Irminsul context (ID %d)".formatted(ctx.getID()));
+                logIfEnabled("[%d] Running after rollback actions in Irminsul context".formatted(ctx.getID()));
+                afterRollbackTransaction(ctx);
                 ctx.runAfterRollbackActions();
-                throw new RuntimeException("Exception occurred while running transaction", throwable);
+                throw new TransactionException(ctx.getID(), throwable);
             } finally {
+                try {
+                    afterTransactionProcessing(ctx);
+                } catch (Throwable throwable) {
+                    log.error("[{}] Exception occurred while processing after transaction actions. This exception will not be rethrown. Please, do not throw exceptions in #afterTransactionProcessing()",
+                        ctx.getID(), throwable);
+                }
                 ctx.clear();
             }
-            return result;
+        } catch (HibernateException exception) {
+            logIfEnabled("An error occurred while opening session", exception);
+            throw exception;
         }
+    }
+
+    /**
+     * Runs a transaction in the current thread context without returning a result.
+     *
+     * @param transaction the transaction to run
+     */
+    public void runInThreadTransactionEmpty(Consumer<Session> transaction) {
+        runInThreadTransaction(session -> {
+            transaction.accept(session);
+            return null;
+        });
+    }
+
+    /**
+     * Invoked before the transaction begins. This method can be overridden to perform custom actions before the transaction starts.
+     *
+     * @param ctx the Irminsul context for the current transaction
+     */
+    protected void beforeBeginTransaction(IrminsulContext ctx) {
+    }
+
+    /**
+     * Invoked after the transaction begins. This method can be overridden to perform custom actions after the transaction starts.
+     *
+     * @param ctx the Irminsul context for the current transaction
+     */
+    protected void afterBeginTransaction(IrminsulContext ctx) {
+    }
+
+    /**
+     * Invoked before the transaction is committed. This method can be overridden to perform custom actions before the transaction is committed.
+     *
+     * @param ctx the Irminsul context for the current transaction
+     */
+    protected void beforeCommitTransaction(IrminsulContext ctx) {
+    }
+
+    /**
+     * Invoked after the transaction is committed. This method can be overridden to perform custom actions after the transaction is committed.
+     *
+     * @param ctx the Irminsul context for the current transaction
+     */
+    protected void afterCommitTransaction(IrminsulContext ctx) {
+    }
+
+    /**
+     * Invoked before the transaction is rolled back. This method can be overridden to perform custom actions before the transaction is rolled back.
+     *
+     * @param ctx the Irminsul context for the current transaction
+     */
+    protected void beforeRollbackTransaction(IrminsulContext ctx) {
+    }
+
+    /**
+     * Invoked after the transaction is rolled back. This method can be overridden to perform custom actions after the transaction is rolled back.
+     *
+     * @param ctx the Irminsul context for the current transaction
+     */
+    protected void afterRollbackTransaction(IrminsulContext ctx) {
+    }
+
+    /**
+     * Invoked after the transaction processing is completed. This method can be overridden to perform custom actions after the transaction
+     * processing.
+     *
+     * @param ctx the Irminsul context for the current transaction
+     */
+    protected void afterTransactionProcessing(IrminsulContext ctx) {
     }
 
     /**
@@ -237,6 +323,18 @@ public class IrminsulDatabaseService {
     protected void logIfEnabled(String message) {
         if (databaseConfiguration.isDebugSql()) {
             log.info(message);
+        }
+    }
+
+    /**
+     * Logs an error message if error logging is enabled.
+     *
+     * @param message   the error message to log
+     * @param throwable the throwable to log
+     */
+    protected void logIfEnabled(String message, Throwable throwable) {
+        if (databaseConfiguration.isLogErrors()) {
+            log.error(message, throwable);
         }
     }
 }

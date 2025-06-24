@@ -31,13 +31,12 @@ public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
             final var employeeToCreate = Employee.create("Test Employee", savedCompany);
             final var savedEmployee = employeeRepository.save(employeeToCreate);
 
-            final var fetchedCompany = companyRepository.findById(savedCompany.getId());
-            final var fetchedEmployee = employeeRepository.findById(savedEmployee.getId());
+            final var fetchedCompany = companyRepository.findById(savedCompany.getId()).orElseThrow();
+            final var fetchedEmployee = employeeRepository.findById(savedEmployee.getId()).orElseThrow();
 
-            assert fetchedCompany != null;
             assert fetchedCompany.getId().equals(savedCompany.getId());
             assert fetchedCompany.getName().equals(savedCompany.getName());
-            assert fetchedEmployee != null;
+
             assert fetchedEmployee.getId().equals(savedEmployee.getId());
             assert fetchedEmployee.getName().equals(savedEmployee.getName());
             assert fetchedEmployee.getCompany().getId().equals(savedCompany.getId());
@@ -50,11 +49,8 @@ public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
 
         // Update
         databaseService.runInThreadTransaction(session -> {
-            final var employeeToUpdate = employeeRepository.findById(employeeId.get());
-            final var companyToUpdate = companyRepository.findById(companyId.get());
-
-            assert employeeToUpdate != null;
-            assert companyToUpdate != null;
+            final var employeeToUpdate = employeeRepository.findById(employeeId.get()).orElseThrow();
+            final var companyToUpdate = companyRepository.findById(companyId.get()).orElseThrow();
 
             employeeToUpdate.setName("Updated Employee");
             companyToUpdate.setName("Updated Company");
@@ -62,11 +58,8 @@ public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
             employeeRepository.save(employeeToUpdate);
             companyRepository.save(companyToUpdate);
 
-            final var updatedEmployee = employeeRepository.findById(employeeId.get());
-            final var updatedCompany = companyRepository.findById(companyId.get());
-
-            assert updatedEmployee != null;
-            assert updatedCompany != null;
+            final var updatedEmployee = employeeRepository.findById(employeeId.get()).orElseThrow();
+            final var updatedCompany = companyRepository.findById(companyId.get()).orElseThrow();
 
             assert updatedEmployee.getName().equals("Updated Employee");
             assert updatedCompany.getName().equals("Updated Company");
@@ -77,11 +70,8 @@ public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
         // Update with rollback
         try {
             databaseService.runInThreadTransaction(session -> {
-                final var employeeToUpdate = employeeRepository.findById(employeeId.get());
-                final var companyToUpdate = companyRepository.findById(companyId.get());
-
-                assert employeeToUpdate != null;
-                assert companyToUpdate != null;
+                final var employeeToUpdate = employeeRepository.findById(employeeId.get()).orElseThrow();
+                final var companyToUpdate = companyRepository.findById(companyId.get()).orElseThrow();
 
                 employeeToUpdate.setName("Rollback Employee");
                 companyToUpdate.setName("Rollback Company");
@@ -97,11 +87,8 @@ public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
 
         // Check if rollback occurred
         databaseService.runInThreadTransaction(session -> {
-            final var employeeAfterRollback = employeeRepository.findById(employeeId.get());
-            final var companyAfterRollback = companyRepository.findById(companyId.get());
-
-            assert employeeAfterRollback != null;
-            assert companyAfterRollback != null;
+            final var employeeAfterRollback = employeeRepository.findById(employeeId.get()).orElseThrow();
+            final var companyAfterRollback = companyRepository.findById(companyId.get()).orElseThrow();
 
             assert !employeeAfterRollback.getName().equals("Rollback Employee");
             assert !companyAfterRollback.getName().equals("Rollback Company");
@@ -111,21 +98,35 @@ public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
 
         // Delete
         databaseService.runInThreadTransaction(session -> {
-            final var employeeToDelete = employeeRepository.findById(employeeId.get());
-            final var companyToDelete = companyRepository.findById(companyId.get());
-
-            assert employeeToDelete != null;
-            assert companyToDelete != null;
+            final var employeeToDelete = employeeRepository.findById(employeeId.get()).orElseThrow();
+            final var companyToDelete = companyRepository.findById(companyId.get()).orElseThrow();
 
             employeeRepository.delete(employeeToDelete);
             companyRepository.delete(companyToDelete);
 
-            final var deletedEmployee = employeeRepository.findById(employeeId.get());
-            final var deletedCompany = companyRepository.findById(companyId.get());
+            final var deletedEmployee = employeeRepository.findById(employeeId.get()).isEmpty();
+            final var deletedCompany = companyRepository.findById(companyId.get()).isEmpty();
 
-            assert deletedEmployee == null;
-            assert deletedCompany == null;
+            assert deletedEmployee;
+            assert deletedCompany;
 
+            return null;
+        });
+
+        // Create multiple companies
+        for (int i = 0; i < 10; i++) {
+            final int finalIndex = i;
+            databaseService.runInThreadTransaction(session -> {
+                final var companyToCreate = Company.create("Company " + finalIndex);
+                companyRepository.save(companyToCreate);
+                return null;
+            });
+        }
+
+        // Find all companies
+        databaseService.runInThreadTransaction(session -> {
+            final var companies = companyRepository.findAll();
+            assert companies.size() == 10 : "Expected 10 companies, found: " + companies.size();
             return null;
         });
 

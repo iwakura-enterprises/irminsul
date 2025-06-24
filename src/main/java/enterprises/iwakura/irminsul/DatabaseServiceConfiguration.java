@@ -45,6 +45,8 @@ public class DatabaseServiceConfiguration {
      */
     protected @Builder.Default boolean debugSql = false;
 
+    protected @Builder.Default boolean logErrors = true;
+
     /**
      * Minimum number of idle connections in the pool
      */
