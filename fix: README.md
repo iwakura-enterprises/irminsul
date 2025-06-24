@@ -19,7 +19,7 @@ that it provides.
 
 ## Documentation
 
-For documentation on installation and usage, please check [my documentations](https://docs.iwakura.enterprises/Irminsul.html).
+For documentation on installation and usage, please check [my documentations](https://docs.iwakura.enterprises/irminsul.html).
 
 ## Showcase
 
