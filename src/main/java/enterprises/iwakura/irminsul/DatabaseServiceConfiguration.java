@@ -58,11 +58,6 @@ public class DatabaseServiceConfiguration {
     protected @Builder.Default int maxConnections = 10;
 
     /**
-     * Path to the Liquibase changelog file in resources
-     */
-    protected @Builder.Default String liquibaseChangelogFile = "liquibase/changelog.yaml";
-
-    /**
      * Charset to use for database operations
      */
     protected @Builder.Default String charset = "utf8mb4";

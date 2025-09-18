@@ -1,5 +1,17 @@
 package enterprises.iwakura.irminsul;
 
+import java.util.Properties;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.cfg.Environment;
+import org.hibernate.cfg.JdbcSettings;
+
 import enterprises.iwakura.irminsul.exception.TransactionException;
 import jakarta.persistence.Entity;
 import liquibase.Contexts;
@@ -9,22 +21,12 @@ import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import liquibase.resource.ResourceAccessor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.HibernateException;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.Environment;
-import org.hibernate.cfg.JdbcSettings;
-
-import java.util.Properties;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
- * Irminsul's Database service class for managing database connections and transactions. You may extend this class
- * for custom configurations.
+ * Irminsul's Database service class for managing database connections and transactions. You may extend this class for
+ * custom configurations.
  */
 @Slf4j
 public class IrminsulDatabaseService {
@@ -71,19 +73,23 @@ public class IrminsulDatabaseService {
     }
 
     /**
-     * Runs Liquibase migrations
+     * Runs Liquibase migrations using the specified changelog file and resource accessor.
+     *
+     * @param changelogFile    the path to the Liquibase changelog file
+     * @param resourceAccessor the resource accessor to use for loading resources
      */
-    public void runLiquibase() {
+    public void runLiquibase(String changelogFile, ResourceAccessor resourceAccessor) {
         log.info("Running Liquibase migrations...");
         // No need to wrap this in a transaction - Liquibase uses transactions by default.
         final var session = sessionFactory.openSession();
         session.doWork(connection -> {
             try {
-                Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
+                Database database = DatabaseFactory.getInstance()
+                    .findCorrectDatabaseImplementation(new JdbcConnection(connection));
                 Liquibase liquibase = new Liquibase(
-                        databaseConfiguration.getLiquibaseChangelogFile(),
-                        new ClassLoaderResourceAccessor(this.getClass().getClassLoader()),
-                        database
+                    changelogFile,
+                    resourceAccessor,
+                    database
                 );
                 liquibase.update(new Contexts(), new LabelExpression());
                 liquibase.close(); // Closes the database connection
@@ -92,6 +98,16 @@ public class IrminsulDatabaseService {
             }
         });
         // No need to close the session - liquibase closes the connection.
+    }
+
+    /**
+     * Runs Liquibase migrations using the specified changelog file and the given class loader to load resources.
+     *
+     * @param changelogFile the path to the Liquibase changelog file
+     * @param classLoader   the class loader to use for loading resources
+     */
+    public void runLiquibaseFromClassLoader(String changelogFile, ClassLoader classLoader) {
+        runLiquibase(changelogFile, new ClassLoaderResourceAccessor(classLoader));
     }
 
     /**
@@ -118,7 +134,6 @@ public class IrminsulDatabaseService {
      *
      * @param transaction the transaction to run
      * @param <R>         the result type
-     *
      * @return the result of the transaction
      */
     public <R> R runInThreadTransaction(Function<Session, R> transaction) {
@@ -126,7 +141,8 @@ public class IrminsulDatabaseService {
         if (IrminsulContext.hasCurrent()) {
             final var ctx = IrminsulContext.getCurrent();
             logIfEnabled("[%d] Running transaction in current Irminsul context".formatted(ctx.getID()));
-            return transaction.apply(ctx.getSession()); // Exceptions here will be caught and handled in the transaction logic
+            return transaction.apply(
+                ctx.getSession()); // Exceptions here will be caught and handled in the transaction logic
         }
 
         // Create new session and transaction
@@ -146,7 +162,8 @@ public class IrminsulDatabaseService {
                 ctx.runAfterCommitActions();
                 return result;
             } catch (Throwable throwable) {
-                logIfEnabled("[%d] Exception occurred while running transaction, rolling back".formatted(ctx.getID()), throwable);
+                logIfEnabled("[%d] Exception occurred while running transaction, rolling back".formatted(ctx.getID()),
+                    throwable);
                 beforeRollbackTransaction(ctx);
                 ctx.rollback();
                 logIfEnabled("[%d] Running after rollback actions in Irminsul context".formatted(ctx.getID()));
@@ -157,7 +174,9 @@ public class IrminsulDatabaseService {
                 try {
                     afterTransactionProcessing(ctx);
                 } catch (Throwable throwable) {
-                    log.error("[{}] Exception occurred while processing after transaction actions. This exception will not be rethrown. Please, do not throw exceptions in #afterTransactionProcessing()",
+                    log.error(
+                        "[{}] Exception occurred while processing after transaction actions. This exception will not "
+                            + "be rethrown. Please, do not throw exceptions in #afterTransactionProcessing()",
                         ctx.getID(), throwable);
                 }
                 ctx.clear();
@@ -181,7 +200,8 @@ public class IrminsulDatabaseService {
     }
 
     /**
-     * Invoked before the transaction begins. This method can be overridden to perform custom actions before the transaction starts.
+     * Invoked before the transaction begins. This method can be overridden to perform custom actions before the
+     * transaction starts.
      *
      * @param ctx the Irminsul context for the current transaction
      */
@@ -189,7 +209,8 @@ public class IrminsulDatabaseService {
     }
 
     /**
-     * Invoked after the transaction begins. This method can be overridden to perform custom actions after the transaction starts.
+     * Invoked after the transaction begins. This method can be overridden to perform custom actions after the
+     * transaction starts.
      *
      * @param ctx the Irminsul context for the current transaction
      */
@@ -197,7 +218,8 @@ public class IrminsulDatabaseService {
     }
 
     /**
-     * Invoked before the transaction is committed. This method can be overridden to perform custom actions before the transaction is committed.
+     * Invoked before the transaction is committed. This method can be overridden to perform custom actions before the
+     * transaction is committed.
      *
      * @param ctx the Irminsul context for the current transaction
      */
@@ -205,7 +227,8 @@ public class IrminsulDatabaseService {
     }
 
     /**
-     * Invoked after the transaction is committed. This method can be overridden to perform custom actions after the transaction is committed.
+     * Invoked after the transaction is committed. This method can be overridden to perform custom actions after the
+     * transaction is committed.
      *
      * @param ctx the Irminsul context for the current transaction
      */
@@ -213,7 +236,8 @@ public class IrminsulDatabaseService {
     }
 
     /**
-     * Invoked before the transaction is rolled back. This method can be overridden to perform custom actions before the transaction is rolled back.
+     * Invoked before the transaction is rolled back. This method can be overridden to perform custom actions before the
+     * transaction is rolled back.
      *
      * @param ctx the Irminsul context for the current transaction
      */
@@ -221,7 +245,8 @@ public class IrminsulDatabaseService {
     }
 
     /**
-     * Invoked after the transaction is rolled back. This method can be overridden to perform custom actions after the transaction is rolled back.
+     * Invoked after the transaction is rolled back. This method can be overridden to perform custom actions after the
+     * transaction is rolled back.
      *
      * @param ctx the Irminsul context for the current transaction
      */
@@ -229,8 +254,8 @@ public class IrminsulDatabaseService {
     }
 
     /**
-     * Invoked after the transaction processing is completed. This method can be overridden to perform custom actions after the transaction
-     * processing.
+     * Invoked after the transaction processing is completed. This method can be overridden to perform custom actions
+     * after the transaction processing.
      *
      * @param ctx the Irminsul context for the current transaction
      */
@@ -261,7 +286,8 @@ public class IrminsulDatabaseService {
                 logIfEnabled("Adding entity class %s to Hibernate configuration".formatted(entityClass.getName()));
                 configuration.addAnnotatedClass(entityClass);
             } else {
-                throw new IllegalArgumentException("Class %s is not annotated with @Entity".formatted(entityClass.getName()));
+                throw new IllegalArgumentException(
+                    "Class %s is not annotated with @Entity".formatted(entityClass.getName()));
             }
         }
     }
@@ -279,7 +305,8 @@ public class IrminsulDatabaseService {
         properties.put(JdbcSettings.JAKARTA_JDBC_PASSWORD, databaseConfiguration.getPassword());
 
         // HikariCP connection pool
-        properties.put("hibernate.connection.provider_class", "org.hibernate.hikaricp.internal.HikariCPConnectionProvider");
+        properties.put("hibernate.connection.provider_class",
+            "org.hibernate.hikaricp.internal.HikariCPConnectionProvider");
         properties.put("hibernate.connection.CharSet", databaseConfiguration.getCharset());
         properties.put("hibernate.connection.characterEncoding", databaseConfiguration.getCharset());
         properties.put("hibernate.connection.useUnicode", String.valueOf(databaseConfiguration.isUseUnicode()));
@@ -308,10 +335,10 @@ public class IrminsulDatabaseService {
      *
      * @param configuration   the Hibernate configuration
      * @param serviceRegistry the service registry
-     *
      * @return the built session factory
      */
-    protected SessionFactory buildSessionFactory(Configuration configuration, StandardServiceRegistryBuilder serviceRegistry) {
+    protected SessionFactory buildSessionFactory(Configuration configuration,
+        StandardServiceRegistryBuilder serviceRegistry) {
         return configuration.buildSessionFactory(serviceRegistry.build());
     }
 
