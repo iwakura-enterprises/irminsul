@@ -1,3 +1,7 @@
+<div align="center">
+  <a href="https://docs.iwakura.enterprises/irminsul.html"><img width="400" src="irminsul-logo.png" /></a>
+</div>
+
 # Irminsul
 
 Opinionated Hibernate ORM wrapper for Java 17+.
@@ -19,7 +23,7 @@ that it provides.
 
 ## Documentation
 
-For documentation on installation and usage, please check [my documentations](https://docs.iwakura.enterprises/irminsul.html).
+Documentation is available at the [Central iwakura.enterprises documentations](https://docs.iwakura.enterprises/irminsul.html)
 
 ## Showcase
 
