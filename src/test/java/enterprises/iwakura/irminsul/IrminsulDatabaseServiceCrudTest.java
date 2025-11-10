@@ -4,9 +4,12 @@ import enterprises.iwakura.irminsul.entity.Company;
 import enterprises.iwakura.irminsul.entity.Employee;
 import enterprises.iwakura.irminsul.repository.CompanyRepository;
 import enterprises.iwakura.irminsul.repository.EmployeeRepository;
+
+import org.hibernate.Session;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
 
@@ -69,7 +72,7 @@ public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
 
         // Update with rollback
         try {
-            databaseService.runInThreadTransaction(session -> {
+            databaseService.runInThreadTransaction((Consumer<Session>) session -> {
                 final var employeeToUpdate = employeeRepository.findById(employeeId.get()).orElseThrow();
                 final var companyToUpdate = companyRepository.findById(companyId.get()).orElseThrow();
 

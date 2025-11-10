@@ -12,7 +12,7 @@ public class TransactionException extends RuntimeException {
     private final long id;
 
     public TransactionException(long id, Throwable cause) {
-        super("Transaction with ID " + id + " failed in exception", cause);
+        super("Transaction with ID " + id + " failed in exception: " + cause.getMessage(), cause);
         this.id = id;
     }
 }

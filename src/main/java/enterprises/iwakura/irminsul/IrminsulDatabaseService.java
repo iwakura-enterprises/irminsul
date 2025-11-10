@@ -7,11 +7,13 @@ import java.util.function.Function;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.cfg.JdbcSettings;
 
+import enterprises.iwakura.irminsul.exception.InitializationException;
 import enterprises.iwakura.irminsul.exception.TransactionException;
 import jakarta.persistence.Entity;
 import liquibase.Contexts;
@@ -22,6 +24,7 @@ import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.ResourceAccessor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
  * custom configurations.
  */
 @Slf4j
+@Getter
 public class IrminsulDatabaseService {
 
     /**
@@ -51,24 +55,40 @@ public class IrminsulDatabaseService {
     }
 
     /**
-     * Initializes the database service with the given entity classes and configuration.
+     * Initializes the database service with the given entity classes. The class loader of this class will be used
+     * for Hibernate.
      *
      * @param entityClasses the entity classes to initialize
      */
     public void initialize(Class<?>... entityClasses) {
+        initialize(IrminsulDatabaseService.class.getClassLoader(), entityClasses);
+    }
+
+    /**
+     * Initializes the database service with the given entity classes and configuration.
+     *
+     * @param classLoader   the class loader for Hibernate to use
+     * @param entityClasses the entity classes to initialize
+     */
+    public void initialize(ClassLoader classLoader, Class<?>... entityClasses) {
         log.info("Initializing Irminsul's Hibernate...");
         try {
             Configuration configuration = new Configuration();
             populateHibernateConfiguration(configuration);
             populateEntityClasses(configuration, entityClasses);
 
-            StandardServiceRegistryBuilder serviceRegistry = new StandardServiceRegistryBuilder();
+            BootstrapServiceRegistryBuilder bootstrapServiceRegistry = new BootstrapServiceRegistryBuilder();
+            configureBootstrapServiceRegistry(bootstrapServiceRegistry, classLoader);
+
+            StandardServiceRegistryBuilder serviceRegistry = new StandardServiceRegistryBuilder(
+                bootstrapServiceRegistry.build()
+            );
             applyHibernateConfiguration(serviceRegistry, configuration.getProperties());
 
             sessionFactory = buildSessionFactory(configuration, serviceRegistry);
             log.info("Irminsul's Hibernate successfully initialized");
         } catch (Exception e) {
-            throw new RuntimeException("Cannot initialize Irminsul's Hibernate", e);
+            throw new InitializationException("Cannot initialize Irminsul's Hibernate", e);
         }
     }
 
@@ -106,7 +126,7 @@ public class IrminsulDatabaseService {
      * @param changelogFile the path to the Liquibase changelog file
      * @param classLoader   the class loader to use for loading resources
      */
-    public void runLiquibaseFromClassLoader(String changelogFile, ClassLoader classLoader) {
+    public void runLiquibase(String changelogFile, ClassLoader classLoader) {
         runLiquibase(changelogFile, new ClassLoaderResourceAccessor(classLoader));
     }
 
@@ -134,6 +154,7 @@ public class IrminsulDatabaseService {
      *
      * @param transaction the transaction to run
      * @param <R>         the result type
+     *
      * @return the result of the transaction
      */
     public <R> R runInThreadTransaction(Function<Session, R> transaction) {
@@ -148,16 +169,16 @@ public class IrminsulDatabaseService {
         // Create new session and transaction
         try (Session session = sessionFactory.openSession()) {
             final var ctx = IrminsulContext.initializeCurrent(session);
-            logIfEnabled("[%d] Initialized new Irminsul context; Begin transaction".formatted(ctx.getID()));
+            logIfEnabled("[%d] Begin transaction".formatted(ctx.getID()));
             try {
                 beforeBeginTransaction(ctx);
                 ctx.beginTransaction();
                 afterBeginTransaction(ctx);
                 R result = transaction.apply(session);
-                logIfEnabled("[%d] Committing transaction in Irminsul context".formatted(ctx.getID()));
+                logIfEnabled("[%d] Committing transaction".formatted(ctx.getID()));
                 beforeCommitTransaction(ctx);
                 ctx.commit();
-                logIfEnabled("[%d] Running after commit actions in Irminsul context".formatted(ctx.getID()));
+                logIfEnabled("[%d] Running after commit actions".formatted(ctx.getID()));
                 afterCommitTransaction(ctx);
                 ctx.runAfterCommitActions();
                 return result;
@@ -166,7 +187,7 @@ public class IrminsulDatabaseService {
                     throwable);
                 beforeRollbackTransaction(ctx);
                 ctx.rollback();
-                logIfEnabled("[%d] Running after rollback actions in Irminsul context".formatted(ctx.getID()));
+                logIfEnabled("[%d] Running after rollback actions".formatted(ctx.getID()));
                 afterRollbackTransaction(ctx);
                 ctx.runAfterRollbackActions();
                 throw new TransactionException(ctx.getID(), throwable);
@@ -176,10 +197,11 @@ public class IrminsulDatabaseService {
                 } catch (Throwable throwable) {
                     log.error(
                         "[{}] Exception occurred while processing after transaction actions. This exception will not "
-                            + "be rethrown. Please, do not throw exceptions in #afterTransactionProcessing()",
+                            + "be rethrown.",
                         ctx.getID(), throwable);
+                } finally {
+                    ctx.clear();
                 }
-                ctx.clear();
             }
         } catch (HibernateException exception) {
             logIfEnabled("An error occurred while opening session", exception);
@@ -192,7 +214,7 @@ public class IrminsulDatabaseService {
      *
      * @param transaction the transaction to run
      */
-    public void runInThreadTransactionEmpty(Consumer<Session> transaction) {
+    public void runInThreadTransaction(Consumer<Session> transaction) {
         runInThreadTransaction(session -> {
             transaction.accept(session);
             return null;
@@ -293,6 +315,19 @@ public class IrminsulDatabaseService {
     }
 
     /**
+     * Configures the BootstrapServiceRegistryBuilder with the given class loader.
+     *
+     * @param bootstrapServiceRegistry the BootstrapServiceRegistryBuilder to configure
+     * @param classLoader              the class loader to use
+     */
+    protected void configureBootstrapServiceRegistry(
+        BootstrapServiceRegistryBuilder bootstrapServiceRegistry,
+        ClassLoader classLoader
+    ) {
+        bootstrapServiceRegistry.applyClassLoader(classLoader);
+    }
+
+    /**
      * Populates the Hibernate properties with the database configuration.
      *
      * @param properties the properties to populate
@@ -335,10 +370,13 @@ public class IrminsulDatabaseService {
      *
      * @param configuration   the Hibernate configuration
      * @param serviceRegistry the service registry
+     *
      * @return the built session factory
      */
-    protected SessionFactory buildSessionFactory(Configuration configuration,
-        StandardServiceRegistryBuilder serviceRegistry) {
+    protected SessionFactory buildSessionFactory(
+        Configuration configuration,
+        StandardServiceRegistryBuilder serviceRegistry
+    ) {
         return configuration.buildSessionFactory(serviceRegistry.build());
     }
 

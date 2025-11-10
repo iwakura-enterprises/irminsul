@@ -2,7 +2,9 @@ package enterprises.iwakura.irminsul.repository;
 
 import enterprises.iwakura.irminsul.IrminsulDatabaseService;
 import enterprises.iwakura.irminsul.util.TriFunction;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceUnitUtil;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
@@ -11,6 +13,8 @@ import lombok.Getter;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.hibernate.jpa.internal.PersistenceUnitUtilImpl;
 
 /**
  * Base repository class for handling database operations within one entity.
@@ -68,7 +72,9 @@ public abstract class BaseRepository<TEntity, TId> {
      * @return the found entity, or null if not found
      */
     public Optional<TEntity> findById(TId id) {
-        return Optional.ofNullable(databaseService.runInThreadTransaction(session -> session.find(getEntityClass(), id, LockModeType.NONE)));
+        return Optional.ofNullable(databaseService.runInThreadTransaction(session -> {
+            return session.find(getEntityClass(), id, LockModeType.NONE);
+        }));
     }
 
     /**
@@ -94,6 +100,7 @@ public abstract class BaseRepository<TEntity, TId> {
 
     /**
      * Saves the entity to the database. If the entity has an ID, it will be updated. Otherwise, it will be inserted.
+     * This uses the {@link #hasId(TEntity)} method to determine if the entity has an ID.
      *
      * @param entity the entity to save
      *
@@ -109,6 +116,7 @@ public abstract class BaseRepository<TEntity, TId> {
 
     /**
      * Saves a list of entities to the database. Each entity will be either inserted or updated based on its ID.
+     * This uses the {@link #hasId(TEntity)} method to determine if the entity has an ID.
      *
      * @param entities the list of entities to save
      *
@@ -119,7 +127,9 @@ public abstract class BaseRepository<TEntity, TId> {
             return entities;
         }
 
-        return databaseService.runInThreadTransaction(session -> entities.stream().map(this::save).toList());
+        return databaseService.runInThreadTransaction(session -> {
+            return entities.stream().map(this::save).toList();
+        });
     }
 
     /**
