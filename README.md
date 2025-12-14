@@ -2,7 +2,9 @@
 
 # Irminsul
 
-<img src="https://akasha.iwakura.enterprises/data-source/hetzner/public/logo/irminsul.png" alt="Irminsul logo" width="300" border-effect="rounded"/>
+<div align="center">
+    <img src="https://akasha.iwakura.enterprises/data-source/hetzner/public/logo/irminsul.png" alt="Irminsul logo" width="300" border-effect="rounded"/>
+</div>
 
 Irminsul is a Java library wrapping Hibernate ORM. This allows you to create applications on top of Hibernate with less
 boilerplate code. It is an opinionated library, fit to suit my needs - and maybe needs of other developers as well. It
