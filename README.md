@@ -41,7 +41,7 @@ var companies = companyRepository.findAll();
 
 ## Installation
 
-<include from="Maven-Versions.md" element-id="irminsul_version"/>
+<a id="irminsul_version" href="https://central.sonatype.com/artifact/enterprises.iwakura/irminsul"><img src="https://maven-badges.sml.io/sonatype-central/enterprises.iwakura/irminsul/badge.png?style=for-the-badge" alt=""></img></a>
 
 > Java 17 or higher is required.
 
@@ -49,67 +49,63 @@ var companies = companyRepository.findAll();
 You might need to click the version badge to see the latest version.
 </note>
 
-<tabs>
-    <tab id="gradle" title="Gradle">
-        <code-block lang="groovy">
-            implementation 'enterprises.iwakura:irminsul:VERSION'
-            // Hibernate ORM
-            implementation 'org.hibernate.orm:hibernate-core:7.0.0.CR1'
-            implementation 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
-            implementation 'org.hibernate.orm:hibernate-hikaricp:7.0.0.CR1'
-            annotationProcessor 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
-            // JDBC, for example PostgreSQL
-            implementation 'org.postgresql:postgresql:42.7.5'
-            // Optional: Liquibase
-            implementation 'org.liquibase:liquibase-core:4.32.0'
-        </code-block>
-    </tab>
-    <tab id="maven" title="Maven">
-        <code-block lang="xml">
-            <![CDATA[
-            <dependency>
-                <groupId>enterprises.iwakura</groupId>
-                <artifactId>irminsul</artifactId>
-                <version>VERSION</version>
-            </dependency>
-            <!-- Hibernate ORM -->
-            <dependency>
-                <groupId>org.hibernate.orm</groupId>
-                <artifactId>hibernate-core</artifactId>
-                <version>7.0.0.CR1</version>
-            </dependency>
-            <dependency>
-                <groupId>org.hibernate.orm</groupId>
-                <artifactId>hibernate-processor</artifactId>
-                <version>7.0.0.CR1</version>
-            </dependency>
-            <dependency>
-                <groupId>org.hibernate.orm</groupId>
-                <artifactId>hibernate-hikaricp</artifactId>
-                <version>7.0.0.CR1</version>
-            </dependency>
-            <dependency>
-                <groupId>org.hibernate.orm</groupId>
-                <artifactId>hibernate-processor</artifactId>
-                <version>7.0.0.CR1</version>
-                <scope>provided</scope>
-            </dependency>
-            <!-- JDBC, for example PostgreSQL -->
-            <dependency>
-                <groupId>org.postgresql</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>42.7.5</version>
-            </dependency>
-            <!-- Optional: Liquibase -->
-            <dependency>
-                <groupId>org.liquibase</groupId>
-                <artifactId>liquibase-core</artifactId>
-                <version>4.32.0</version>
-            </dependency>
-            ]]>
-        </code-block>
-    </tab>
-</tabs>
+### Gradle
+```groovy
+implementation 'enterprises.iwakura:irminsul:VERSION'
+// Hibernate ORM
+implementation 'org.hibernate.orm:hibernate-core:7.0.0.CR1'
+implementation 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
+implementation 'org.hibernate.orm:hibernate-hikaricp:7.0.0.CR1'
+annotationProcessor 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
+// JDBC, for example PostgreSQL
+implementation 'org.postgresql:postgresql:42.7.5'
+// Optional: Liquibase
+implementation 'org.liquibase:liquibase-core:4.32.0'
+```
+
+### Maven
+
+```xml
+<dependency>
+    <groupId>enterprises.iwakura</groupId>
+    <artifactId>irminsul</artifactId>
+    <version>VERSION</version>
+</dependency>
+<!-- Hibernate ORM -->
+<dependency>
+    <groupId>org.hibernate.orm</groupId>
+    <artifactId>hibernate-core</artifactId>
+    <version>7.0.0.CR1</version>
+</dependency>
+<dependency>
+    <groupId>org.hibernate.orm</groupId>
+    <artifactId>hibernate-processor</artifactId>
+    <version>7.0.0.CR1</version>
+</dependency>
+<dependency>
+    <groupId>org.hibernate.orm</groupId>
+    <artifactId>hibernate-hikaricp</artifactId>
+    <version>7.0.0.CR1</version>
+</dependency>
+<dependency>
+    <groupId>org.hibernate.orm</groupId>
+    <artifactId>hibernate-processor</artifactId>
+    <version>7.0.0.CR1</version>
+    <scope>provided</scope>
+</dependency>
+<!-- JDBC, for example PostgreSQL -->
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <version>42.7.5</version>
+</dependency>
+<!-- Optional: Liquibase -->
+<dependency>
+    <groupId>org.liquibase</groupId>
+    <artifactId>liquibase-core</artifactId>
+    <version>4.32.0</version>
+</dependency>
+```
 
 ## Usage
 First, we need to initialize the database service. Then, we can define our entities and initialize the repositories.
