@@ -78,6 +78,23 @@ public abstract class BaseRepository<TEntity, TId> {
     }
 
     /**
+     * Checks if an entity exists by its ID.
+     *
+     * @param id the ID of the entity to check
+     *
+     * @return true if the entity exists, false otherwise
+     */
+    public boolean existsById(TId id) {
+        return databaseService.runInThreadTransaction(session -> {
+            var hql = "SELECT COUNT(e) FROM " + getEntityClass().getSimpleName() + " e WHERE e.id = :id";
+            Long count = session.createQuery(hql, Long.class)
+                    .setParameter("id", id)
+                    .getSingleResult();
+            return count != null && count > 0;
+        });
+    }
+
+    /**
      * Finds all entities by criteria.
      *
      * @param criteriaBuilderConsumer the criteria builder consumer
@@ -107,11 +124,13 @@ public abstract class BaseRepository<TEntity, TId> {
      * @return the saved entity
      */
     public TEntity save(TEntity entity) {
-        if (hasId(entity)) {
-            return update(entity);
-        } else {
-            return insert(entity);
-        }
+        return databaseService.runInThreadTransaction(session -> {
+            if (hasId(entity)) {
+                return update(entity);
+            } else {
+                return insert(entity);
+            }
+        });
     }
 
     /**

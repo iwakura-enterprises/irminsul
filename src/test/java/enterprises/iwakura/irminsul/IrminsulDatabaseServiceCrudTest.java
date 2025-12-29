@@ -45,6 +45,9 @@ public class IrminsulDatabaseServiceCrudTest extends DatabaseTest {
             assert fetchedEmployee.getCompany().getId().equals(savedCompany.getId());
             assert fetchedEmployee.getCompany().getName().equals(savedCompany.getName());
 
+            assert employeeRepository.existsById(savedEmployee.getId());
+            assert companyRepository.existsById(savedCompany.getId());
+
             employeeId.set(savedEmployee.getId());
             companyId.set(savedCompany.getId());
             return null;

@@ -131,6 +131,16 @@ public class IrminsulDatabaseService {
     }
 
     /**
+     * Runs Liquibase migrations using the specified changelog file for the current class loader (Thread context class
+     * loader).
+     *
+     * @param changelogFile the path to the Liquibase changelog file
+     */
+    public void runLiquibase(String changelogFile) {
+        runLiquibase(changelogFile, new ClassLoaderResourceAccessor(Thread.currentThread().getContextClassLoader()));
+    }
+
+    /**
      * Shuts down the database service and closes the session factory.
      */
     public void shutdown() {
