@@ -15,7 +15,7 @@ public class CompanyRepository extends BaseRepository<Company, Long> {
     }
 
     @Override
-    protected Class<Company> getEntityClass() {
+    public Class<Company> getEntityClass() {
         return Company.class;
     }
 

@@ -15,7 +15,7 @@ public class EmployeeRepository extends BaseRepository<Employee, Long> {
     }
 
     @Override
-    protected Class<Employee> getEntityClass() {
+    public Class<Employee> getEntityClass() {
         return Employee.class;
     }
 

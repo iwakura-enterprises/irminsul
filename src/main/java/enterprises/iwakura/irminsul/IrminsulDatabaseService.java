@@ -38,12 +38,19 @@ public class IrminsulDatabaseService {
     /**
      * The database configuration used for this service.
      */
-    protected final DatabaseServiceConfiguration databaseConfiguration;
+    protected DatabaseServiceConfiguration databaseConfiguration;
 
     /**
      * The Hibernate session factory used for database operations.
      */
     protected SessionFactory sessionFactory;
+
+    /**
+     * Creates a new DatabaseService instance without any configuration. You must initialize before invoking
+     * {@link #initialize(Class[])} or {@link #initialize(ClassLoader, Class[])}.
+     */
+    public IrminsulDatabaseService() {
+    }
 
     /**
      * Creates a new DatabaseService instance with the given configuration.
@@ -71,6 +78,10 @@ public class IrminsulDatabaseService {
      * @param entityClasses the entity classes to initialize
      */
     public void initialize(ClassLoader classLoader, Class<?>... entityClasses) {
+        if (databaseConfiguration == null) {
+            throw new InitializationException("Database configuration is not set", null);
+        }
+
         log.info("Initializing Irminsul's Hibernate...");
         try {
             Configuration configuration = new Configuration();

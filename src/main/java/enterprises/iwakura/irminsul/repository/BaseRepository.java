@@ -44,7 +44,7 @@ public abstract class BaseRepository<TEntity, TId> {
      *
      * @return the entity class type
      */
-    protected abstract Class<TEntity> getEntityClass();
+    public abstract Class<TEntity> getEntityClass();
 
     /**
      * Determines if the entity has an ID. Used when using {@link #save(TEntity)} method to determine if should be inserted or updated.
