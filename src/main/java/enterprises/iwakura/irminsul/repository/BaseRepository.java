@@ -190,8 +190,7 @@ public abstract class BaseRepository<TEntity, TId> {
      */
     public TEntity update(TEntity entity) {
         return databaseService.runInThreadTransaction(session -> {
-            session.merge(entity);
-            return entity;
+            return session.merge(entity);
         });
     }
 
@@ -204,10 +203,7 @@ public abstract class BaseRepository<TEntity, TId> {
      */
     public List<TEntity> updateAll(List<TEntity> entities) {
         return databaseService.runInThreadTransaction(session -> {
-            for (TEntity entity : entities) {
-                session.merge(entity);
-            }
-            return entities;
+            return entities.stream().map(session::merge).toList();
         });
     }
 
